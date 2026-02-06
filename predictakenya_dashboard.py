@@ -142,7 +142,7 @@ else:
     st.header("📊 Executive Dashboard")
     st.metric("Total Revenue", f"KES {df['Sales'].sum():,.0f}")
 
-# =========================================================================
+    # =========================================================================
 # PDF REPORT (UPDATED)
 # =========================================================================
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, PageBreak
@@ -247,3 +247,4 @@ if st.button("📄 Generate PDF Report"):
         file_name="PredictaKenya_Full_Report.pdf",
         mime="application/pdf"
     )
+
