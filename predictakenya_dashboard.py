@@ -997,8 +997,17 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 
+def fig_to_image(fig_func):
+    """Render matplotlib chart to image buffer"""
+    buf = BytesIO()
+    fig = fig_func()
+    fig.savefig(buf, format="png", dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    buf.seek(0)
+    return buf
+
 if st.button("📄 Generate & Download PDF Report", type="primary"):
-    with st.spinner("Generating PDF report..."):
+    with st.spinner("Generating full executive PDF report..."):
 
         pdf_buffer = BytesIO()
         doc = SimpleDocTemplate(
@@ -1011,46 +1020,136 @@ if st.button("📄 Generate & Download PDF Report", type="primary"):
         story = []
         styles = getSampleStyleSheet()
 
-        title_style = ParagraphStyle(
-            "Title",
-            parent=styles["Heading1"],
-            fontSize=20,
-            alignment=TA_CENTER,
-            textColor=colors.HexColor("#006600")
+        # =========================
+        # TITLE + EXECUTIVE SUMMARY
+        # =========================
+        title = Paragraph(
+            "PREDICTAKENYA™ EXECUTIVE SALES REPORT",
+            ParagraphStyle(
+                "title",
+                fontSize=22,
+                alignment=TA_CENTER,
+                textColor=colors.HexColor("#006600")
+            )
         )
 
-        story.append(Paragraph("PREDICTAKENYA™ SALES REPORT", title_style))
+        story.append(title)
         story.append(Spacer(1, 0.3 * inch))
 
-        # TOP PRODUCTS TABLE
-        top_data = [["Rank", "Product", "Total Sales"]]
-        top_df = results["top_products"].reset_index()
+        exec_summary = f"""
+        <b>Total Revenue:</b> KES {total_revenue:,.0f}<br/>
+        <b>Total Profit:</b> KES {total_profit:,.0f}<br/>
+        <b>Forecast (12M):</b> KES {forecast_total:,.0f}<br/>
+        <b>Model Accuracy:</b> {100 - metrics['mape']:.1f}%<br/>
+        <b>Products Analysed:</b> {df['Product'].nunique()}<br/>
+        <b>Regions:</b> {df['Region'].nunique()}
+        """
 
-        for i, row in top_df.iterrows():
-            top_data.append([
-                str(i + 1),
-                row["Product"],
-                f"KES {row['Sales']:,.0f}"
+        story.append(Paragraph("<b>EXECUTIVE SUMMARY</b>", styles["Heading2"]))
+        story.append(Paragraph(exec_summary, styles["Normal"]))
+        story.append(PageBreak())
+
+        # =========================
+        # FORECAST TABLE
+        # =========================
+        story.append(Paragraph("12-MONTH SALES FORECAST", styles["Heading2"]))
+
+        forecast_table = [["Month", "Forecast", "Lower", "Upper"]]
+        for _, r in forecast_df.iterrows():
+            forecast_table.append([
+                r["Date"].strftime("%B %Y"),
+                f"KES {r['Forecast']:,.0f}",
+                f"KES {r['Lower_Bound']:,.0f}",
+                f"KES {r['Upper_Bound']:,.0f}",
             ])
 
-        table = Table(top_data, colWidths=[1.2*inch, 3*inch, 2*inch])
-        table.setStyle(TableStyle([
-            ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#006600")),
-            ("TEXTCOLOR", (0,0), (-1,0), colors.white),
-            ("GRID", (0,0), (-1,-1), 1, colors.black),
-        ]))
+        story.append(Table(forecast_table, colWidths=[1.5*inch]*4))
+        story.append(PageBreak())
 
-        story.append(table)
+        # =========================
+        # TOP PRODUCTS
+        # =========================
+        story.append(Paragraph("TOP PRODUCTS", styles["Heading2"]))
 
+        top_data = [["Rank", "Product", "Total Sales"]]
+        for i, r in results["top_products"].reset_index().iterrows():
+            top_data.append([str(i+1), r["Product"], f"KES {r['Sales']:,.0f}"])
+
+        story.append(Table(top_data, colWidths=[1*inch, 3*inch, 2*inch]))
+        story.append(PageBreak())
+
+        # =========================
+        # SLOW MOVERS
+        # =========================
+        story.append(Paragraph("SLOW MOVING PRODUCTS", styles["Heading2"]))
+
+        slow_data = [["Product", "Sales"]]
+        for _, r in results["slow_products"].reset_index().iterrows():
+            slow_data.append([r["Product"], f"KES {r['Sales']:,.0f}"])
+
+        story.append(Table(slow_data, colWidths=[4*inch, 2*inch]))
+        story.append(PageBreak())
+
+        # =========================
+        # EXPIRING INVENTORY
+        # =========================
+        story.append(Paragraph("EXPIRING INVENTORY", styles["Heading2"]))
+
+        exp_data = [["Product", "Qty", "Days Left"]]
+        for _, r in results["expiring_goods"].iterrows():
+            exp_data.append([
+                r["Product"],
+                str(int(r["Quantity"])),
+                str(int(r["Days_Left"]))
+            ])
+
+        story.append(Table(exp_data, colWidths=[3*inch, 1.5*inch, 1.5*inch]))
+        story.append(PageBreak())
+
+        # =========================
+        # REGIONAL PERFORMANCE
+        # =========================
+        story.append(Paragraph("REGIONAL PERFORMANCE", styles["Heading2"]))
+
+        reg_data = [["Region", "Top Product", "Sales"]]
+        for _, r in results["top_regional"].iterrows():
+            reg_data.append([
+                r["Region"],
+                r["Top_Product"],
+                f"KES {r['Total_Sales']:,.0f}"
+            ])
+
+        story.append(Table(reg_data, colWidths=[2*inch, 2*inch, 2*inch]))
+        story.append(PageBreak())
+
+        # =========================
+        # CASH FLOW
+        # =========================
+        story.append(Paragraph("CASH FLOW SUMMARY (LAST 6 MONTHS)", styles["Heading2"]))
+
+        cash_data = [["Week", "Sales", "Profit"]]
+        for _, r in results["weekly_cashflow"].iterrows():
+            cash_data.append([
+                r["Week"].strftime("%d %b %Y"),
+                f"KES {r['Sales']:,.0f}",
+                f"KES {r['Profit']:,.0f}"
+            ])
+
+        story.append(Table(cash_data, colWidths=[2*inch]*3))
+
+        # =========================
+        # BUILD PDF
+        # =========================
         doc.build(story)
         pdf_buffer.seek(0)
 
         st.download_button(
-            "📥 Download PDF",
+            "📥 Download Full Executive PDF",
             pdf_buffer,
-            file_name="PredictaKenya_Report.pdf",
+            file_name="PredictaKenya_Executive_Report.pdf",
             mime="application/pdf"
         )
+
 
 
 
