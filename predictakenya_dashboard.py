@@ -1129,7 +1129,7 @@ try:
             # TOP PRODUCTS
             # ------------------------------
             story.append(Paragraph("TOP PERFORMING PRODUCTS", heading_style))
-
+try:
 top_data = [["Rank", "Product", "Total Sales"]]
 
 top_df = results["top_products"].reset_index()
@@ -1140,6 +1140,8 @@ for idx, row in top_df.iterrows():
         row["Product"],
         f"KES {row['Sales']:,.0f}"
     ])
+except Exception as e:
+    print("Error building top products table:", e)
 
 top_table = Table(top_data, colWidths=[1*inch, 3*inch, 2*inch])
 top_table.setStyle(TableStyle([
