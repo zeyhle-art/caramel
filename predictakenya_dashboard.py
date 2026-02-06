@@ -1088,25 +1088,22 @@ else:
                     story.append(PageBreak())
                     
                     # Top Products
-                    story.append(Paragraph("TOP 10 PERFORMING PRODUCTS", heading_style))
-                    top_data = [['Rank', 'Product', 'Total Sales']]
-                    for idx, (product, sales) in enumerate(results['top_products'].items(), 1):
-                        top_data.append([str(idx), product, f"KES {sales:,.0f}"])
-                    
-                    top_table = Table(top_data, colWidths=[0.8*inch, 3.5*inch, 1.7*inch])
-                    top_table.setStyle(TableStyle([
-                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#006600')),
-                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                        ('FONTSIZE', (0, 0), (-1, 0), 10),
-                        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                        ('BACKGROUND', (0, 1), (-1, -1), colors.lightgreen),
-                        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                        ('FONTSIZE', (0, 1), (-1, -1), 9)
-                    ]))
-                    story.append(top_table)
-                    story.append(Spacer(1, 0.3*inch))
+top_data = [["Rank", "Product", "Total Sales"]]
+
+        for idx, row in results["top_products"].reset_index().iterrows():
+            top_data.append([
+                str(idx + 1),
+                row["Product"],
+                f"KES {row['Sales']:,.0f}"
+            ])
+
+        top_table = Table(top_data, colWidths=[1*inch, 3*inch, 2*inch])
+        top_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.green),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ]))
+        story.append(top_table)))
                     
                     # Slow Moving Products
                     story.append(Paragraph("SLOW MOVING PRODUCTS", heading_style))
