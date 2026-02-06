@@ -986,238 +986,196 @@ else:
         # Download PDF Button
         st.markdown("---")
         st.markdown("### 📥 Download Complete Report")
-        
-        # Create PDF content
-        try:
-            from reportlab.lib.pagesizes import letter, A4
-            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-            from reportlab.lib.units import inch
-            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
-            from reportlab.lib import colors
-            from reportlab.lib.enums import TA_CENTER, TA_LEFT
-            
-            if st.button("📄 Generate & Download PDF Report", type="primary"):
-                with st.spinner("Generating comprehensive PDF report..."):
-                    # Create PDF
-                    pdf_buffer = BytesIO()
-                    doc = SimpleDocTemplate(pdf_buffer, pagesize=A4, topMargin=0.5*inch, bottomMargin=0.5*inch)
-                    story = []
-                    styles = getSampleStyleSheet()
-                    
-                    # Custom styles
-                    title_style = ParagraphStyle(
-                        'CustomTitle',
-                        parent=styles['Heading1'],
-                        fontSize=24,
-                        textColor=colors.HexColor('#006600'),
-                        spaceAfter=30,
-                        alignment=TA_CENTER,
-                        fontName='Helvetica-Bold'
-                    )
-                    
-                    heading_style = ParagraphStyle(
-                        'CustomHeading',
-                        parent=styles['Heading2'],
-                        fontSize=16,
-                        textColor=colors.HexColor('#006600'),
-                        spaceAfter=12,
-                        spaceBefore=12,
-                        fontName='Helvetica-Bold'
-                    )
-                    
-                    # Title
-                    story.append(Paragraph("PREDICTAKENYA™ SALES FORECAST REPORT", title_style))
-                    story.append(Paragraph("Kustawi Digital Solutions Ltd", styles['Normal']))
-                    story.append(Spacer(1, 0.3*inch))
-                    
-                    # Report Info
-                    story.append(Paragraph(f"<b>Generated:</b> {datetime.now().strftime('%d %B %Y, %H:%M EAT')}", styles['Normal']))
-                    story.append(Paragraph(f"<b>Forecast Period:</b> {forecast_df['Date'].iloc[0].strftime('%B %Y')} to {forecast_df['Date'].iloc[-1].strftime('%B %Y')}", styles['Normal']))
-                    story.append(Spacer(1, 0.3*inch))
-                    
-                    # Forecast Overview
-                    story.append(Paragraph("FORECAST OVERVIEW", heading_style))
-                    forecast_data = [
-                        ['Metric', 'Value'],
-                        ['Total Projected Revenue', f"KES {total_revenue:,.0f}"],
-                        ['Average Monthly Sales', f"KES {avg_monthly:,.0f}"],
-                        ['Peak Month', peak_month],
-                        ['Low Month', low_month],
-                        ['Model Confidence', '95%'],
-                        ['Products Analyzed', str(df['Product'].nunique())]
-                    ]
-                    
-                    forecast_table = Table(forecast_data, colWidths=[3*inch, 3*inch])
-                    forecast_table.setStyle(TableStyle([
-                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#006600')),
-                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                        ('FONTSIZE', (0, 0), (-1, 0), 12),
-                        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-                    ]))
-                    story.append(forecast_table)
-                    story.append(Spacer(1, 0.3*inch))
-                    
-                    # Monthly Forecast
-                    story.append(Paragraph("12-MONTH FORECAST BREAKDOWN", heading_style))
-                    monthly_data = [['Month', 'Forecast', 'Lower Bound', 'Upper Bound']]
-                    for _, row in forecast_df.iterrows():
-                        monthly_data.append([
-                            row['Date'].strftime('%B %Y'),
-                            f"KES {row['Forecast']:,.0f}",
-                            f"KES {row['Lower_Bound']:,.0f}",
-                            f"KES {row['Upper_Bound']:,.0f}"
-                        ])
-                    
-                    monthly_table = Table(monthly_data, colWidths=[1.5*inch, 1.5*inch, 1.5*inch, 1.5*inch])
-                    monthly_table.setStyle(TableStyle([
-                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#006600')),
-                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                        ('FONTSIZE', (0, 0), (-1, 0), 10),
-                        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                        ('FONTSIZE', (0, 1), (-1, -1), 9)
-                    ]))
-                    story.append(monthly_table)
-                    story.append(PageBreak())
-                    
-                # Top Products
-story.append(Paragraph("TOP PERFORMING PRODUCTS", heading_style))
+   # ==============================
+# PDF REPORT GENERATION
+# ==============================
 
-top_data = [["Rank", "Product", "Total Sales"]]
+from io import BytesIO
+from datetime import datetime
 
-for idx, row in results["top_products"].reset_index().iterrows():
-    top_data.append([
-        str(idx + 1),
-        row["Product"],
-        f"KES {row['Sales']:,.0f}"
-    ])
+try:
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.platypus import (
+        SimpleDocTemplate, Table, TableStyle,
+        Paragraph, Spacer, PageBreak
+    )
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER
 
-top_table = Table(top_data, colWidths=[1*inch, 3*inch, 2*inch])
-top_table.setStyle(TableStyle([
-    ("BACKGROUND", (0, 0), (-1, 0), colors.green),
-    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-    ("GRID", (0, 0), (-1, -1), 1, colors.black),
-]))
+    if st.button("📄 Generate & Download PDF Report", type="primary"):
+        with st.spinner("Generating comprehensive PDF report..."):
 
-story.append(top_table)
-story.append(PageBreak())
+            pdf_buffer = BytesIO()
+            doc = SimpleDocTemplate(
+                pdf_buffer,
+                pagesize=A4,
+                topMargin=0.5 * inch,
+                bottomMargin=0.5 * inch
+            )
 
-                    
-                    # Slow Moving Products
-                    story.append(Paragraph("SLOW MOVING PRODUCTS", heading_style))
-                    slow_data = [['Rank', 'Product', 'Total Sales']]
-                    for idx, (product, sales) in enumerate(results['slow_products'].items(), 1):
-                        slow_data.append([str(idx), product, f"KES {sales:,.0f}"])
-                    
-                    slow_table = Table(slow_data, colWidths=[0.8*inch, 3.5*inch, 1.7*inch])
-                    slow_table.setStyle(TableStyle([
-                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#BB0000')),
-                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                        ('FONTSIZE', (0, 0), (-1, 0), 10),
-                        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                        ('BACKGROUND', (0, 1), (-1, -1), colors.lightcoral),
-                        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                        ('FONTSIZE', (0, 1), (-1, -1), 9)
-                    ]))
-                    story.append(slow_table)
-                    story.append(PageBreak())
-                    
-                    # Recommendations
-                    story.append(Paragraph("ACTIONABLE RECOMMENDATIONS", heading_style))
-                    
-                    recommendations = f"""
-                    <b>1. INVENTORY PLANNING</b><br/>
-                    • Stock up 25-30% for peak months ({peak_month})<br/>
-                    • Reduce inventory for low-demand periods<br/>
-                    • Maintain safety stock of KES {forecast_df['Forecast'].std() * 2:,.0f}<br/>
-                    <br/>
-                    <b>2. CASH FLOW MANAGEMENT</b><br/>
-                    • Expected quarterly revenue: KES {total_revenue / 4:,.0f}<br/>
-                    • Ensure working capital buffer of KES {avg_monthly * 1.2:,.0f}<br/>
-                    • Plan for seasonal fluctuations<br/>
-                    <br/>
-                    <b>3. MARKETING STRATEGY</b><br/>
-                    • Launch campaigns 6-8 weeks before peak seasons<br/>
-                    • Focus promotions during low-demand months ({low_month})<br/>
-                    • Target high-value customer segments<br/>
-                    <br/>
-                    <b>4. PRODUCT PORTFOLIO OPTIMIZATION</b><br/>
-                    • Phase out consistently low-performing products<br/>
-                    • Increase stock of top performers<br/>
-                    • Introduce complementary products during peak seasons
-                    """
-                    
-                    story.append(Paragraph(recommendations, styles['Normal']))
-                    story.append(Spacer(1, 0.3*inch))
-                    
-                    # Expiring Inventory
-                    if len(results['expiring_goods']) > 0:
-                        story.append(PageBreak())
-                        story.append(Paragraph("EXPIRING INVENTORY ALERTS", heading_style))
-                        
-                        expiring_data = [['Product', 'Quantity', 'Days Left', 'Urgency']]
-                        for _, row in results['expiring_goods'].head(20).iterrows():
-                            urgency = '🔴 Critical' if row['Days_Left'] <= 7 else ('🟡 Moderate' if row['Days_Left'] <= 14 else '🟢 Planned')
-                            expiring_data.append([
-                                row['Product'],
-                                str(int(row['Quantity'])),
-                                str(int(row['Days_Left'])),
-                                urgency
-                            ])
-                        
-                        expiring_table = Table(expiring_data, colWidths=[2.5*inch, 1*inch, 1*inch, 1.5*inch])
-                        expiring_table.setStyle(TableStyle([
-                            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#BB0000')),
-                            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                            ('FONTSIZE', (0, 0), (-1, 0), 10),
-                            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                            ('BACKGROUND', (0, 1), (-1, -1), colors.lightyellow),
-                            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                            ('FONTSIZE', (0, 1), (-1, -1), 9)
-                        ]))
-                        story.append(expiring_table)
-                    
-                    # Compliance Footer
-                    story.append(Spacer(1, 0.5*inch))
-                    compliance_text = """
-                    <b>COMPLIANCE NOTICE</b><br/>
-                    This report complies with Kenya Data Protection Act 2019.<br/>
-                    All customer data has been anonymized and encrypted.<br/>
-                    <br/>
-                    <b>Powered by PredictaKenya™ | Kustawi Digital Solutions Ltd</b><br/>
-                    Patent Pending | Confidential & Proprietary<br/>
-                    © 2024 Kustawi Digital Solutions Ltd. All Rights Reserved.
-                    """
-                    story.append(Paragraph(compliance_text, styles['Normal']))
-                    
-                    # Build PDF
-                    doc.build(story)
-                    pdf_buffer.seek(0)
-                    
-                    # Download button
-                    st.success("✅ PDF Report Generated Successfully!")
-                    st.download_button(
-                        label="📥 Download PDF Report",
-                        data=pdf_buffer,
-                        file_name=f"PredictaKenya_Report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
-                        mime="application/pdf",
-                        type="primary"
-                    )
-        
-        except ImportError:
-            st.warning("⚠️ PDF generation requires reportlab library. Install it with: `pip install reportlab`")
-            st.info("You can still view and copy the executive summary above.")
+            story = []
+            styles = getSampleStyleSheet()
+
+            # ------------------------------
+            # STYLES
+            # ------------------------------
+            title_style = ParagraphStyle(
+                "TitleStyle",
+                parent=styles["Heading1"],
+                fontSize=24,
+                textColor=colors.HexColor("#006600"),
+                alignment=TA_CENTER,
+                spaceAfter=30,
+                fontName="Helvetica-Bold"
+            )
+
+            heading_style = ParagraphStyle(
+                "HeadingStyle",
+                parent=styles["Heading2"],
+                fontSize=16,
+                textColor=colors.HexColor("#006600"),
+                spaceBefore=16,
+                spaceAfter=12,
+                fontName="Helvetica-Bold"
+            )
+
+            # ------------------------------
+            # TITLE
+            # ------------------------------
+            story.append(Paragraph("PREDICTAKENYA™ SALES FORECAST REPORT", title_style))
+            story.append(Paragraph("Kustawi Digital Solutions Ltd", styles["Normal"]))
+            story.append(Spacer(1, 0.3 * inch))
+
+            story.append(
+                Paragraph(
+                    f"<b>Generated:</b> {datetime.now().strftime('%d %B %Y, %H:%M EAT')}",
+                    styles["Normal"]
+                )
+            )
+
+            story.append(
+                Paragraph(
+                    f"<b>Forecast Period:</b> "
+                    f"{forecast_df['Date'].iloc[0].strftime('%B %Y')} – "
+                    f"{forecast_df['Date'].iloc[-1].strftime('%B %Y')}",
+                    styles["Normal"]
+                )
+            )
+
+            story.append(Spacer(1, 0.3 * inch))
+
+            # ------------------------------
+            # FORECAST OVERVIEW
+            # ------------------------------
+            story.append(Paragraph("FORECAST OVERVIEW", heading_style))
+
+            forecast_data = [
+                ["Metric", "Value"],
+                ["Total Projected Revenue", f"KES {total_revenue:,.0f}"],
+                ["Average Monthly Sales", f"KES {avg_monthly:,.0f}"],
+                ["Peak Month", peak_month],
+                ["Low Month", low_month],
+                ["Model Confidence", "95%"],
+                ["Products Analyzed", str(df["Product"].nunique())],
+            ]
+
+            forecast_table = Table(forecast_data, colWidths=[3 * inch, 3 * inch])
+            forecast_table.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#006600")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+            ]))
+
+            story.append(forecast_table)
+            story.append(Spacer(1, 0.3 * inch))
+
+            # ------------------------------
+            # MONTHLY FORECAST
+            # ------------------------------
+            story.append(Paragraph("12-MONTH FORECAST BREAKDOWN", heading_style))
+
+            monthly_data = [["Month", "Forecast", "Lower Bound", "Upper Bound"]]
+
+            for _, row in forecast_df.iterrows():
+                monthly_data.append([
+                    row["Date"].strftime("%B %Y"),
+                    f"KES {float(row['Forecast']):,.0f}",
+                    f"KES {float(row['Lower_Bound']):,.0f}",
+                    f"KES {float(row['Upper_Bound']):,.0f}",
+                ])
+
+            monthly_table = Table(
+                monthly_data,
+                colWidths=[1.5 * inch] * 4
+            )
+
+            monthly_table.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#006600")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                ("FONTSIZE", (0, 1), (-1, -1), 9),
+            ]))
+
+            story.append(monthly_table)
+            story.append(PageBreak())
+
+            # ------------------------------
+            # TOP PRODUCTS
+            # ------------------------------
+            story.append(Paragraph("TOP PERFORMING PRODUCTS", heading_style))
+
+            top_data = [["Rank", "Product", "Total Sales"]]
+
+            for idx, (product, sales) in enumerate(results["top_products"].items(), 1):
+                try:
+                    sales_value = float(sales)
+                except (TypeError, ValueError):
+                    sales_value = 0.0
+
+                top_data.append([
+                    str(idx),
+                    product,
+                    f"KES {sales_value:,.0f}"
+                ])
+
+            top_table = Table(top_data, colWidths=[1 * inch, 3 * inch, 2 * inch])
+            top_table.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#006600")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                ("BACKGROUND", (0, 1), (-1, -1), colors.lightgreen),
+            ]))
+
+            story.append(top_table)
+            story.append(PageBreak())
+
+            # ------------------------------
+            # BUILD PDF
+            # ------------------------------
+            doc.build(story)
+            pdf_buffer.seek(0)
+
+            st.success("✅ PDF Report Generated Successfully!")
+
+            st.download_button(
+                label="📥 Download PDF Report",
+                data=pdf_buffer,
+                file_name=f"PredictaKenya_Report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+                mime="application/pdf",
+                type="primary",
+            )
+
+except ImportError:
+    st.warning("⚠️ PDF generation requires the reportlab library.")
+    st.info("Install it using: pip install reportlab")
+
 
 # Footer
 st.markdown("---")
