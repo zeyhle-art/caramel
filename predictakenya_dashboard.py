@@ -1,7 +1,7 @@
 """
 KUSTAWI DIGITAL SOLUTIONS LTD - PROPRIETARY SOFTWARE
 Product: PredictaKenya™ - AI Sales Forecasting Dashboard
-Copyright © 2024 Kustawi Digital Solutions Ltd. All Rights Reserved.
+Copyright © 2026 Kustawi Digital Solutions Ltd. All Rights Reserved.
 
 CONFIDENTIAL AND PROPRIETARY
 Patent Pending: KE/P/2024/XXXX
@@ -867,25 +867,54 @@ else:
             """, unsafe_allow_html=True)
         
         with col2:
-            st.markdown(f"""
+            st.markdown("""
                 <div class='kustawi-card'>
                     <h4 style='color: #FFD700;'>💡 ACTIONABLE RECOMMENDATIONS</h4>
                     <hr style='border-color: #FFD700;'>
-                    
-                    <h5 style='color: #FFD700;'>1. INVENTORY PLANNING</h5>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # Inventory Department
+            st.markdown(f"""
+                <div class='kustawi-card'>
+                    <h5 style='color: #FFD700;'>📦 INVENTORY DEPARTMENT</h5>
                     <p>• Stock up 25-30% for peak months ({peak_month})</p>
-                    <p>• Reduce inventory for low-demand periods</p>
+                    <p>• Reduce inventory for low-demand periods ({low_month})</p>
                     <p>• Maintain safety stock: KES {forecast_df['Forecast'].std() * 2:,.0f}</p>
-                    
-                    <h5 style='color: #FFD700; margin-top: 1rem;'>2. CASH FLOW MANAGEMENT</h5>
+                    <p>• Monitor stock levels weekly during peak seasons</p>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # Finance Department
+            st.markdown(f"""
+                <div class='kustawi-card'>
+                    <h5 style='color: #FFD700;'>💰 FINANCE DEPARTMENT</h5>
                     <p>• Expected quarterly revenue: KES {total_revenue / 4:,.0f}</p>
                     <p>• Working capital buffer: KES {avg_monthly * 1.2:,.0f}</p>
                     <p>• Plan for seasonal fluctuations</p>
-                    
-                    <h5 style='color: #FFD700; margin-top: 1rem;'>3. MARKETING STRATEGY</h5>
-                    <p>• Launch campaigns 6-8 weeks before peak seasons</p>
-                    <p>• Focus promotions during low-demand months</p>
+                    <p>• Budget for ±15% variance in forecasts</p>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # Marketing Department
+            st.markdown(f"""
+                <div class='kustawi-card'>
+                    <h5 style='color: #FFD700;'>📢 MARKETING DEPARTMENT</h5>
+                    <p>• Launch campaigns 6-8 weeks before {peak_month}</p>
+                    <p>• Focus promotions during {low_month}</p>
                     <p>• Target high-value customer segments</p>
+                    <p>• Leverage social media during peak periods</p>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # Sales Department
+            st.markdown("""
+                <div class='kustawi-card'>
+                    <h5 style='color: #FFD700;'>🎯 SALES DEPARTMENT</h5>
+                    <p>• Focus on top-performing products</p>
+                    <p>• Implement upselling strategies during peak months</p>
+                    <p>• Train staff on seasonal product knowledge</p>
+                    <p>• Set individual targets aligned with forecast</p>
                 </div>
             """, unsafe_allow_html=True)
         
@@ -1166,7 +1195,7 @@ else:
                     <br/>
                     <b>Powered by PredictaKenya™ | Kustawi Digital Solutions Ltd</b><br/>
                     Patent Pending | Confidential & Proprietary<br/>
-                    © 2024 Kustawi Digital Solutions Ltd. All Rights Reserved.
+                    © 2026 Kustawi Digital Solutions Ltd. All Rights Reserved.
                     """
                     story.append(Paragraph(compliance_text, styles['Normal']))
                     
