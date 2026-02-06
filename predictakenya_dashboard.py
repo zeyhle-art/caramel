@@ -1087,24 +1087,28 @@ else:
                     story.append(monthly_table)
                     story.append(PageBreak())
                     
-                    # Top Products
+                # Top Products
+story.append(Paragraph("TOP PERFORMING PRODUCTS", heading_style))
+
 top_data = [["Rank", "Product", "Total Sales"]]
 
-        for idx, row in results["top_products"].reset_index().iterrows():
-            top_data.append([
-                str(idx + 1),
-                row["Product"],
-                f"KES {row['Sales']:,.0f}"
-            ])
+for idx, row in results["top_products"].reset_index().iterrows():
+    top_data.append([
+        str(idx + 1),
+        row["Product"],
+        f"KES {row['Sales']:,.0f}"
+    ])
 
-        top_table = Table(top_data, colWidths=[1*inch, 3*inch, 2*inch])
-        top_table.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.green),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-            ("GRID", (0, 0), (-1, -1), 1, colors.black),
-        ]))
-        story.append(top_table)))
+top_table = Table(top_data, colWidths=[1*inch, 3*inch, 2*inch])
+top_table.setStyle(TableStyle([
+    ("BACKGROUND", (0, 0), (-1, 0), colors.green),
+    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+    ("GRID", (0, 0), (-1, -1), 1, colors.black),
+]))
+
+story.append(top_table)
 story.append(PageBreak())
+
                     
                     # Slow Moving Products
                     story.append(Paragraph("SLOW MOVING PRODUCTS", heading_style))
