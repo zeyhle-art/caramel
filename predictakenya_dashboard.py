@@ -838,9 +838,9 @@ else:
         st.markdown("""
             <div class='kustawi-card'>
                 <h2 style='color: #FFD700; text-align: center; margin-bottom: 2rem;'>
-                    ════════════════════════════════════════════════════════════════<br>
+                
                     PREDICTAKENYA™ SALES FORECAST REPORT<br>
-                    ════════════════════════════════════════════════════════════════
+                
                 </h2>
             </div>
         """, unsafe_allow_html=True)
@@ -1091,7 +1091,8 @@ else:
                     story.append(Paragraph("TOP 10 PERFORMING PRODUCTS", heading_style))
                     top_data = [['Rank', 'Product', 'Total Sales']]
                     for idx, (product, sales) in enumerate(results['top_products'].items(), 1):
-                        top_data.append([str(idx), product, f"KES {sales:,.0f}"])
+                       top_data.append([str(idx), product, f"KES {float(sales):,.0f}"])
+
                     
                     top_table = Table(top_data, colWidths=[0.8*inch, 3.5*inch, 1.7*inch])
                     top_table.setStyle(TableStyle([
