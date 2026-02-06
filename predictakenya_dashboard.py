@@ -1130,22 +1130,16 @@ try:
             # ------------------------------
             story.append(Paragraph("TOP PERFORMING PRODUCTS", heading_style))
 
-top_data = [["Rank", "Product", "Total Sales"]]
 try:
-    # earlier logic
-    results = compute_results()
+    results = build_dashboard_data()
+    charts = generate_charts()
+    tables = generate_tables()
+    # lots of code
 
 except Exception as e:
-    print("Computation failed:", e)
-top_df = results["top_products"].reset_index()
+    print("Dashboard error:", e)
 
-for idx, row in top_df.iterrows():
-    top_data.append([
-        str(idx + 1),
-        row["Product"],
-        f"KES {row['Sales']:,.0f}"
-    ])
-
+top_data = [["Rank", "Product", "Total Sales"]]
 
 top_table = Table(top_data, colWidths=[1*inch, 3*inch, 2*inch])
 top_table.setStyle(TableStyle([
