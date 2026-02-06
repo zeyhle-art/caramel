@@ -1130,19 +1130,56 @@ try:
             # ------------------------------
             story.append(Paragraph("TOP PERFORMING PRODUCTS", heading_style))
 
-            top_data = [["Rank", "Product", "Total Sales"]]
+top_data = [["Rank", "Product", "Total Sales"]]
 
-            for idx, (product, sales) in enumerate(results["top_products"].items(), 1):
-                try:
-                    sales_value = float(sales)
-                except (TypeError, ValueError):
-                    sales_value = 0.0
+top_df = results["top_products"].reset_index()
 
-                top_data.append([
-                    str(idx),
-                    product,
-                    f"KES {sales_value:,.0f}"
-                ])
+for idx, row in top_df.iterrows():
+    top_data.append([
+        str(idx + 1),
+        row["Product"],
+        f"KES {row['Sales']:,.0f}"
+    ])
+
+top_table = Table(top_data, colWidths=[1*inch, 3*inch, 2*inch])
+top_table.setStyle(TableStyle([
+    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#006600")),
+    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+    ("GRID", (0, 0), (-1, -1), 1, colors.black),
+]))
+
+story.append(top_table)
+story.append(PageBreak())
+
+story.append(Paragraph("EXPIRING INVENTORY STATUS", heading_style))
+
+expiring_data = [["Product", "Quantity", "Days Left", "Status"]]
+
+for _, row in results["expiring_goods"].iterrows():
+    if row["Days_Left"] <= 7:
+        status = "🔴 Critical"
+    elif row["Days_Left"] <= 14:
+        status = "🟡 Warning"
+    else:
+        status = "🟢 Safe"
+
+    expiring_data.append([
+        row["Product"],
+        str(int(row["Quantity"])),
+        str(int(row["Days_Left"])),
+        status
+    ])
+
+expiring_table = Table(expiring_data, colWidths=[3*inch, 1*inch, 1*inch, 1.5*inch])
+expiring_table.setStyle(TableStyle([
+    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#BB0000")),
+    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+    ("GRID", (0, 0), (-1, -1), 1, colors.black),
+]))
+
+story.append(expiring_table)
+story.append(PageBreak())
+
 
             top_table = Table(top_data, colWidths=[1 * inch, 3 * inch, 2 * inch])
             top_table.setStyle(TableStyle([
@@ -1176,8 +1213,29 @@ except ImportError:
     st.warning("⚠️ PDF generation requires the reportlab library.")
     st.info("Install it using: pip install reportlab")
 
+story.append(Paragraph("ACTIONABLE RECOMMENDATIONS", heading_style))
 
-# Footer
+recommendations = f"""
+<b>Inventory</b><br/>
+• Apply 30–50% discount on 🔴 critical items immediately<br/>
+• Bundle 🟡 warning items with high-performing products<br/>
+• Maintain buffer stock for peak month: <b>{peak_month}</b><br/><br/>
+
+<b>Finance</b><br/>
+• Expected quarterly revenue: KES {total_revenue/4:,.0f}<br/>
+• Maintain working capital of KES {avg_monthly*1.2:,.0f}<br/><br/>
+
+<b>Sales & Marketing</b><br/>
+• Push promotions 6–8 weeks before peak month<br/>
+• Upsell top-performing products aggressively<br/>
+• Reduce focus on persistent slow movers
+"""
+
+story.append(Paragraph(recommendations, styles["Normal"]))
+story.append(PageBreak())
+
+
+# Compliance Footer
 st.markdown("---")
 st.markdown("""
     <div style='text-align: center; padding: 2rem; background: rgba(0,0,0,0.3); border-radius: 12px; margin-top: 2rem; border: 1px solid #FFD700;'>
