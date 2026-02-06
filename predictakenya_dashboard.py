@@ -363,7 +363,7 @@ col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     st.markdown("""
         <h1 style='text-align: center; font-size: 3.5rem; margin-bottom: 0;'>
-            🇰🇪 PredictaKenya™
+            PredictaKenya™
         </h1>
         <p style='text-align: center; font-size: 1.3rem; color: #FFD700; margin-top: 0; font-weight: 600;'>
             AI-Powered Sales Forecasting | Kustawi Digital Solutions Ltd
