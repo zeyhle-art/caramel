@@ -1091,20 +1091,18 @@ else:
                     story.append(Paragraph("TOP 10 PERFORMING PRODUCTS", heading_style))
                     top_data = [['Rank', 'Product', 'Total Sales']]
                     for idx, (product, sales) in enumerate(results['top_products'].items(), 1):
-                            for idx, (product, sales) in enumerate(results['top_products'].items(), 1):
-    try:
-        sales_value = float(sales)
-    except (TypeError, ValueError):
-        sales_value = 0.0
+                      try:
+                        sales_value = float(sales)
+                        except (TypeError, ValueError):
+                        sales_value = 0.0
 
-    top_data.append([
-        str(idx),
-        product,
-        f"KES {sales_value:,.0f}"
-    ])
-
-                    
-                    top_table = Table(top_data, colWidths=[0.8*inch, 3.5*inch, 1.7*inch])
+                   top_data.append([
+                       str(idx),
+                       product,
+                     f"KES {sales_value:,.0f}"
+                    ])
+  
+                 top_table = Table(top_data, colWidths=[0.8*inch, 3.5*inch, 1.7*inch])
                     top_table.setStyle(TableStyle([
                         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#006600')),
                         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
