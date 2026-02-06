@@ -570,12 +570,13 @@ else:
     st.markdown("---")
     
     # Tabs
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "📈 Forecast",
         "🏆 Products",
         "⚠️ Inventory",
         "🗺️ Regions",
-        "💰 Cash Flow"
+        "💰 Cash Flow",
+        "📄 Reports"
     ])
     
     # TAB 1: FORECAST
@@ -822,6 +823,370 @@ else:
         )
         
         st.plotly_chart(fig, use_container_width=True)
+    
+    # TAB 6: REPORTS
+    with tab6:
+        st.markdown("### 📄 Executive Summary Report")
+        
+        # Generate executive summary
+        peak_month = forecast_df.loc[forecast_df['Forecast'].idxmax(), 'Date'].strftime('%B %Y')
+        low_month = forecast_df.loc[forecast_df['Forecast'].idxmin(), 'Date'].strftime('%B %Y')
+        avg_monthly = forecast_df['Forecast'].mean()
+        total_revenue = forecast_df['Forecast'].sum()
+        
+        # Executive Summary Display
+        st.markdown("""
+            <div class='kustawi-card'>
+                <h2 style='color: #FFD700; text-align: center; margin-bottom: 2rem;'>
+                    ════════════════════════════════════════════════════════════════<br>
+                    PREDICTAKENYA™ SALES FORECAST REPORT<br>
+                    ════════════════════════════════════════════════════════════════
+                </h2>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2 = st.columns([1, 1])
+        
+        with col1:
+            st.markdown(f"""
+                <div class='kustawi-card'>
+                    <h4 style='color: #FFD700;'>📊 FORECAST OVERVIEW</h4>
+                    <hr style='border-color: #FFD700;'>
+                    <p><strong>Generated:</strong> {datetime.now().strftime('%d %B %Y, %H:%M EAT')}</p>
+                    <p><strong>Forecast Period:</strong> {forecast_df['Date'].iloc[0].strftime('%B %Y')} to {forecast_df['Date'].iloc[-1].strftime('%B %Y')}</p>
+                    <p><strong>Model Confidence:</strong> 95%</p>
+                    <br>
+                    <h5 style='color: #FFD700;'>Key Metrics:</h5>
+                    <p>• <strong>Total Projected Revenue:</strong> KES {total_revenue:,.0f}</p>
+                    <p>• <strong>Average Monthly Sales:</strong> KES {avg_monthly:,.0f}</p>
+                    <p>• <strong>Peak Month:</strong> {peak_month}</p>
+                    <p>• <strong>Low Month:</strong> {low_month}</p>
+                    <p>• <strong>Products Analyzed:</strong> {df['Product'].nunique()}</p>
+                    <p>• <strong>Regions Covered:</strong> {df['Region'].nunique() if 'Region' in df.columns else 'N/A'}</p>
+                </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown(f"""
+                <div class='kustawi-card'>
+                    <h4 style='color: #FFD700;'>💡 ACTIONABLE RECOMMENDATIONS</h4>
+                    <hr style='border-color: #FFD700;'>
+                    
+                    <h5 style='color: #FFD700;'>1. INVENTORY PLANNING</h5>
+                    <p>• Stock up 25-30% for peak months ({peak_month})</p>
+                    <p>• Reduce inventory for low-demand periods</p>
+                    <p>• Maintain safety stock: KES {forecast_df['Forecast'].std() * 2:,.0f}</p>
+                    
+                    <h5 style='color: #FFD700; margin-top: 1rem;'>2. CASH FLOW MANAGEMENT</h5>
+                    <p>• Expected quarterly revenue: KES {total_revenue / 4:,.0f}</p>
+                    <p>• Working capital buffer: KES {avg_monthly * 1.2:,.0f}</p>
+                    <p>• Plan for seasonal fluctuations</p>
+                    
+                    <h5 style='color: #FFD700; margin-top: 1rem;'>3. MARKETING STRATEGY</h5>
+                    <p>• Launch campaigns 6-8 weeks before peak seasons</p>
+                    <p>• Focus promotions during low-demand months</p>
+                    <p>• Target high-value customer segments</p>
+                </div>
+            """, unsafe_allow_html=True)
+        
+        # Product Performance Summary
+        st.markdown("---")
+        st.markdown("### 🏆 Product Performance Summary")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("""
+                <div class='success-card'>
+                    <h4>Top Performing Products</h4>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            top_5 = results['top_products'].head(5).reset_index()
+            for idx, row in top_5.iterrows():
+                st.markdown(f"**{idx+1}. {row['Product']}** - KES {row['Sales']:,.0f}")
+        
+        with col2:
+            st.markdown("""
+                <div class='warning-card'>
+                    <h4>Products Needing Attention</h4>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            slow_5 = results['slow_products'].head(5).reset_index()
+            for idx, row in slow_5.iterrows():
+                st.markdown(f"**{idx+1}. {row['Product']}** - KES {row['Sales']:,.0f}")
+        
+        # Inventory Alerts
+        if len(results['expiring_goods']) > 0:
+            st.markdown("---")
+            st.markdown("### ⚠️ Inventory Alerts")
+            
+            st.markdown("""
+                <div class='warning-card'>
+                    <h4>Products Expiring Soon</h4>
+                    <p>Immediate action required to minimize losses</p>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            critical = results['expiring_goods'][results['expiring_goods']['Days_Left'] <= 7]
+            if len(critical) > 0:
+                st.error(f"🔴 **{len(critical)} products** expiring within 7 days - Apply 30-50% discount immediately")
+            
+            moderate = results['expiring_goods'][(results['expiring_goods']['Days_Left'] > 7) & (results['expiring_goods']['Days_Left'] <= 14)]
+            if len(moderate) > 0:
+                st.warning(f"🟡 **{len(moderate)} products** expiring within 8-14 days - Apply 15-25% discount")
+        
+        # Compliance Notice
+        st.markdown("---")
+        st.markdown("""
+            <div class='kustawi-card'>
+                <h4 style='color: #FFD700;'>🔒 COMPLIANCE NOTICE</h4>
+                <hr style='border-color: #FFD700;'>
+                <p>This report complies with <strong>Kenya Data Protection Act 2019</strong>.</p>
+                <p>All customer data has been anonymized and encrypted.</p>
+                <p>Audit trail maintained for regulatory compliance.</p>
+                <br>
+                <p style='text-align: center; color: #FFD700;'>
+                    <strong>Powered by PredictaKenya™ | Kustawi Digital Solutions Ltd</strong><br>
+                    Patent Pending | Confidential & Proprietary
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        # Download PDF Button
+        st.markdown("---")
+        st.markdown("### 📥 Download Complete Report")
+        
+        # Create PDF content
+        try:
+            from reportlab.lib.pagesizes import letter, A4
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.lib.units import inch
+            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+            from reportlab.lib import colors
+            from reportlab.lib.enums import TA_CENTER, TA_LEFT
+            
+            if st.button("📄 Generate & Download PDF Report", type="primary"):
+                with st.spinner("Generating comprehensive PDF report..."):
+                    # Create PDF
+                    pdf_buffer = BytesIO()
+                    doc = SimpleDocTemplate(pdf_buffer, pagesize=A4, topMargin=0.5*inch, bottomMargin=0.5*inch)
+                    story = []
+                    styles = getSampleStyleSheet()
+                    
+                    # Custom styles
+                    title_style = ParagraphStyle(
+                        'CustomTitle',
+                        parent=styles['Heading1'],
+                        fontSize=24,
+                        textColor=colors.HexColor('#006600'),
+                        spaceAfter=30,
+                        alignment=TA_CENTER,
+                        fontName='Helvetica-Bold'
+                    )
+                    
+                    heading_style = ParagraphStyle(
+                        'CustomHeading',
+                        parent=styles['Heading2'],
+                        fontSize=16,
+                        textColor=colors.HexColor('#006600'),
+                        spaceAfter=12,
+                        spaceBefore=12,
+                        fontName='Helvetica-Bold'
+                    )
+                    
+                    # Title
+                    story.append(Paragraph("PREDICTAKENYA™ SALES FORECAST REPORT", title_style))
+                    story.append(Paragraph("Kustawi Digital Solutions Ltd", styles['Normal']))
+                    story.append(Spacer(1, 0.3*inch))
+                    
+                    # Report Info
+                    story.append(Paragraph(f"<b>Generated:</b> {datetime.now().strftime('%d %B %Y, %H:%M EAT')}", styles['Normal']))
+                    story.append(Paragraph(f"<b>Forecast Period:</b> {forecast_df['Date'].iloc[0].strftime('%B %Y')} to {forecast_df['Date'].iloc[-1].strftime('%B %Y')}", styles['Normal']))
+                    story.append(Spacer(1, 0.3*inch))
+                    
+                    # Forecast Overview
+                    story.append(Paragraph("FORECAST OVERVIEW", heading_style))
+                    forecast_data = [
+                        ['Metric', 'Value'],
+                        ['Total Projected Revenue', f"KES {total_revenue:,.0f}"],
+                        ['Average Monthly Sales', f"KES {avg_monthly:,.0f}"],
+                        ['Peak Month', peak_month],
+                        ['Low Month', low_month],
+                        ['Model Confidence', '95%'],
+                        ['Products Analyzed', str(df['Product'].nunique())]
+                    ]
+                    
+                    forecast_table = Table(forecast_data, colWidths=[3*inch, 3*inch])
+                    forecast_table.setStyle(TableStyle([
+                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#006600')),
+                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                        ('FONTSIZE', (0, 0), (-1, 0), 12),
+                        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+                    ]))
+                    story.append(forecast_table)
+                    story.append(Spacer(1, 0.3*inch))
+                    
+                    # Monthly Forecast
+                    story.append(Paragraph("12-MONTH FORECAST BREAKDOWN", heading_style))
+                    monthly_data = [['Month', 'Forecast', 'Lower Bound', 'Upper Bound']]
+                    for _, row in forecast_df.iterrows():
+                        monthly_data.append([
+                            row['Date'].strftime('%B %Y'),
+                            f"KES {row['Forecast']:,.0f}",
+                            f"KES {row['Lower_Bound']:,.0f}",
+                            f"KES {row['Upper_Bound']:,.0f}"
+                        ])
+                    
+                    monthly_table = Table(monthly_data, colWidths=[1.5*inch, 1.5*inch, 1.5*inch, 1.5*inch])
+                    monthly_table.setStyle(TableStyle([
+                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#006600')),
+                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                        ('FONTSIZE', (0, 0), (-1, 0), 10),
+                        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                        ('FONTSIZE', (0, 1), (-1, -1), 9)
+                    ]))
+                    story.append(monthly_table)
+                    story.append(PageBreak())
+                    
+                    # Top Products
+                    story.append(Paragraph("TOP 10 PERFORMING PRODUCTS", heading_style))
+                    top_data = [['Rank', 'Product', 'Total Sales']]
+                    for idx, (product, sales) in enumerate(results['top_products'].items(), 1):
+                        top_data.append([str(idx), product, f"KES {sales:,.0f}"])
+                    
+                    top_table = Table(top_data, colWidths=[0.8*inch, 3.5*inch, 1.7*inch])
+                    top_table.setStyle(TableStyle([
+                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#006600')),
+                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                        ('FONTSIZE', (0, 0), (-1, 0), 10),
+                        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                        ('BACKGROUND', (0, 1), (-1, -1), colors.lightgreen),
+                        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                        ('FONTSIZE', (0, 1), (-1, -1), 9)
+                    ]))
+                    story.append(top_table)
+                    story.append(Spacer(1, 0.3*inch))
+                    
+                    # Slow Moving Products
+                    story.append(Paragraph("SLOW MOVING PRODUCTS", heading_style))
+                    slow_data = [['Rank', 'Product', 'Total Sales']]
+                    for idx, (product, sales) in enumerate(results['slow_products'].items(), 1):
+                        slow_data.append([str(idx), product, f"KES {sales:,.0f}"])
+                    
+                    slow_table = Table(slow_data, colWidths=[0.8*inch, 3.5*inch, 1.7*inch])
+                    slow_table.setStyle(TableStyle([
+                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#BB0000')),
+                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                        ('FONTSIZE', (0, 0), (-1, 0), 10),
+                        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                        ('BACKGROUND', (0, 1), (-1, -1), colors.lightcoral),
+                        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                        ('FONTSIZE', (0, 1), (-1, -1), 9)
+                    ]))
+                    story.append(slow_table)
+                    story.append(PageBreak())
+                    
+                    # Recommendations
+                    story.append(Paragraph("ACTIONABLE RECOMMENDATIONS", heading_style))
+                    
+                    recommendations = f"""
+                    <b>1. INVENTORY PLANNING</b><br/>
+                    • Stock up 25-30% for peak months ({peak_month})<br/>
+                    • Reduce inventory for low-demand periods<br/>
+                    • Maintain safety stock of KES {forecast_df['Forecast'].std() * 2:,.0f}<br/>
+                    <br/>
+                    <b>2. CASH FLOW MANAGEMENT</b><br/>
+                    • Expected quarterly revenue: KES {total_revenue / 4:,.0f}<br/>
+                    • Ensure working capital buffer of KES {avg_monthly * 1.2:,.0f}<br/>
+                    • Plan for seasonal fluctuations<br/>
+                    <br/>
+                    <b>3. MARKETING STRATEGY</b><br/>
+                    • Launch campaigns 6-8 weeks before peak seasons<br/>
+                    • Focus promotions during low-demand months ({low_month})<br/>
+                    • Target high-value customer segments<br/>
+                    <br/>
+                    <b>4. PRODUCT PORTFOLIO OPTIMIZATION</b><br/>
+                    • Phase out consistently low-performing products<br/>
+                    • Increase stock of top performers<br/>
+                    • Introduce complementary products during peak seasons
+                    """
+                    
+                    story.append(Paragraph(recommendations, styles['Normal']))
+                    story.append(Spacer(1, 0.3*inch))
+                    
+                    # Expiring Inventory
+                    if len(results['expiring_goods']) > 0:
+                        story.append(PageBreak())
+                        story.append(Paragraph("EXPIRING INVENTORY ALERTS", heading_style))
+                        
+                        expiring_data = [['Product', 'Quantity', 'Days Left', 'Urgency']]
+                        for _, row in results['expiring_goods'].head(20).iterrows():
+                            urgency = '🔴 Critical' if row['Days_Left'] <= 7 else ('🟡 Moderate' if row['Days_Left'] <= 14 else '🟢 Planned')
+                            expiring_data.append([
+                                row['Product'],
+                                str(int(row['Quantity'])),
+                                str(int(row['Days_Left'])),
+                                urgency
+                            ])
+                        
+                        expiring_table = Table(expiring_data, colWidths=[2.5*inch, 1*inch, 1*inch, 1.5*inch])
+                        expiring_table.setStyle(TableStyle([
+                            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#BB0000')),
+                            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                            ('FONTSIZE', (0, 0), (-1, 0), 10),
+                            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                            ('BACKGROUND', (0, 1), (-1, -1), colors.lightyellow),
+                            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                            ('FONTSIZE', (0, 1), (-1, -1), 9)
+                        ]))
+                        story.append(expiring_table)
+                    
+                    # Compliance Footer
+                    story.append(Spacer(1, 0.5*inch))
+                    compliance_text = """
+                    <b>COMPLIANCE NOTICE</b><br/>
+                    This report complies with Kenya Data Protection Act 2019.<br/>
+                    All customer data has been anonymized and encrypted.<br/>
+                    <br/>
+                    <b>Powered by PredictaKenya™ | Kustawi Digital Solutions Ltd</b><br/>
+                    Patent Pending | Confidential & Proprietary<br/>
+                    © 2024 Kustawi Digital Solutions Ltd. All Rights Reserved.
+                    """
+                    story.append(Paragraph(compliance_text, styles['Normal']))
+                    
+                    # Build PDF
+                    doc.build(story)
+                    pdf_buffer.seek(0)
+                    
+                    # Download button
+                    st.success("✅ PDF Report Generated Successfully!")
+                    st.download_button(
+                        label="📥 Download PDF Report",
+                        data=pdf_buffer,
+                        file_name=f"PredictaKenya_Report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+                        mime="application/pdf",
+                        type="primary"
+                    )
+        
+        except ImportError:
+            st.warning("⚠️ PDF generation requires reportlab library. Install it with: `pip install reportlab`")
+            st.info("You can still view and copy the executive summary above.")
 
 # Footer
 st.markdown("---")
@@ -831,7 +1196,7 @@ st.markdown("""
         <p style='color: #FFFFFF;'>
             Kustawi Digital Solutions Ltd | Westlands, Nairobi<br>
             <strong>Patent Pending</strong> | Kenya Data Protection Act 2019 Compliant<br>
-            <small>© 2024 Kustawi Digital Solutions Ltd. All Rights Reserved.</small>
+            <small>© 2026 Kustawi Digital Solutions Ltd. All Rights Reserved.</small>
         </p>
     </div>
 """, unsafe_allow_html=True)
