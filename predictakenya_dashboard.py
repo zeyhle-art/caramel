@@ -363,7 +363,7 @@ col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     st.markdown("""
         <h1 style='text-align: center; font-size: 3.5rem; margin-bottom: 0;'>
-            PredictaKenya™
+        PredictaKenya™
         </h1>
         <p style='text-align: center; font-size: 1.3rem; color: #FFD700; margin-top: 0; font-weight: 600;'>
             AI-Powered Sales Forecasting | Kustawi Digital Solutions Ltd
@@ -1091,7 +1091,7 @@ else:
                     story.append(Paragraph("TOP 10 PERFORMING PRODUCTS", heading_style))
                     top_data = [['Rank', 'Product', 'Total Sales']]
                     for idx, (product, sales) in enumerate(results['top_products'].items(), 1):
-                        top_data.append([str(idx), product, f"KES {sales:,.0f}"])
+                        top_data.append([str(idx), product, f"KES {float(sales):,.0f}"])
                     
                     top_table = Table(top_data, colWidths=[0.8*inch, 3.5*inch, 1.7*inch])
                     top_table.setStyle(TableStyle([
@@ -1112,7 +1112,7 @@ else:
                     story.append(Paragraph("SLOW MOVING PRODUCTS", heading_style))
                     slow_data = [['Rank', 'Product', 'Total Sales']]
                     for idx, (product, sales) in enumerate(results['slow_products'].items(), 1):
-                        slow_data.append([str(idx), product, f"KES {sales:,.0f}"])
+                        slow_data.append([str(idx), product, f"KES {float(sales):,.0f}"])
                     
                     slow_table = Table(slow_data, colWidths=[0.8*inch, 3.5*inch, 1.7*inch])
                     slow_table.setStyle(TableStyle([
