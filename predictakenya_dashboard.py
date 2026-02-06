@@ -1,7 +1,7 @@
 """
 KUSTAWI DIGITAL SOLUTIONS LTD - PROPRIETARY SOFTWARE
 Product: PredictaKenya™ - AI Sales Forecasting Dashboard
-Copyright © 2024 Kustawi Digital Solutions Ltd.
+Copyright © 2024 Kustawi Digital Solutions Ltd. All Rights Reserved.
 CONFIDENTIAL AND PROPRIETARY
 """
 
@@ -13,8 +13,6 @@ import plotly.express as px
 from datetime import datetime
 from io import BytesIO
 import warnings
-import tempfile
-import os
 
 from kustawi_ml_engine import (
     PredictaKenyaEngine,
@@ -24,7 +22,7 @@ from kustawi_ml_engine import (
 warnings.filterwarnings("ignore")
 
 # ============================================================================
-# PAGE CONFIG (UNCHANGED)
+# PAGE CONFIG
 # ============================================================================
 st.set_page_config(
     page_title="PredictaKenya™ | Kustawi Digital Solutions",
@@ -60,17 +58,20 @@ def generate_kenyan_sample_data():
     data = []
     for date in dates:
         for _ in range(np.random.randint(10, 20)):
+            product = np.random.choice(products)
+            region = np.random.choice(regions)
             quantity = np.random.randint(1, 6)
             price = np.random.uniform(50, 500)
             sales = quantity * price
+            profit = sales * np.random.uniform(0.1, 0.3)
 
             data.append({
                 "Date": date,
-                "Product": np.random.choice(products),
-                "Region": np.random.choice(regions),
+                "Product": product,
+                "Region": region,
                 "Quantity": quantity,
                 "Sales": round(sales, 2),
-                "Profit": round(sales * np.random.uniform(0.1, 0.3), 2),
+                "Profit": round(profit, 2),
                 "Days_To_Expiry": np.random.randint(1, 90)
             })
 
@@ -83,9 +84,11 @@ def analyze_comprehensive(df, engine):
     results = {}
 
     df_processed = engine.load_and_validate_data(df)
-    engine.train_model(df_processed)
+    metrics = engine.train_model(df_processed)
+    forecast = engine.generate_forecast(df_processed, periods=12)
 
-    results["forecast"] = engine.generate_forecast(df_processed, periods=12)
+    results["metrics"] = metrics
+    results["forecast"] = forecast
 
     results["top_products"] = (
         df.groupby("Product")[["Sales", "Quantity", "Profit"]]
@@ -127,7 +130,7 @@ with st.sidebar:
         st.rerun()
 
 # ============================================================================
-# MAIN DASHBOARD (UNCHANGED UI)
+# MAIN CONTENT
 # ============================================================================
 if not st.session_state.analysis_complete:
     st.title("🇰🇪 PredictaKenya™")
@@ -139,111 +142,108 @@ else:
     st.header("📊 Executive Dashboard")
     st.metric("Total Revenue", f"KES {df['Sales'].sum():,.0f}")
 
+# =========================================================================
+# PDF REPORT (UPDATED)
+# =========================================================================
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, PageBreak
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import inch
+import tempfile
+import os
+
+def save_chart(fig, filename):
+    """Save a Plotly figure as PNG to embed in PDF"""
+    path = os.path.join(tempfile.gettempdir(), filename)
+    fig.write_image(path, scale=2)
+    return path
+
+if st.button("📄 Generate PDF Report"):
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    styles = getSampleStyleSheet()
+    story = []
+
+    # ================= TITLE =================
+    story.append(Paragraph("PREDICTAKENYA™ SALES REPORT", styles["Title"]))
+    story.append(Paragraph(f"Generated: {datetime.now().strftime('%d %B %Y %H:%M EAT')}", styles["Normal"]))
+    story.append(Spacer(1, 0.2*inch))
+
     # ================= FORECAST CHART =================
-    forecast_df = results["forecast"]
-    forecast_fig = go.Figure()
-    forecast_fig.add_trace(go.Scatter(
-        x=forecast_df["Date"],
-        y=forecast_df["Forecast"],
-        mode="lines+markers",
-        name="Forecast"
-    ))
-    st.plotly_chart(forecast_fig, use_container_width=True)
-
-    # ================= EXPIRY VISUAL =================
-    expiry_fig = px.histogram(
-        df,
-        x="Days_To_Expiry",
-        nbins=30,
-        color_discrete_sequence=["green"]
-    )
-    st.plotly_chart(expiry_fig, use_container_width=True)
-
-    # =========================================================================
-    # PDF REPORT (FULL DASHBOARD MIRROR)
-    # =========================================================================
-    from reportlab.platypus import (
-        SimpleDocTemplate, Table, TableStyle,
-        Paragraph, Spacer, Image, PageBreak
-    )
-    from reportlab.lib.pagesizes import A4
-    from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.lib import colors
-    from reportlab.lib.units import inch
-
-    def save_chart(fig, name):
-        path = os.path.join(tempfile.gettempdir(), name)
-        fig.write_image(path, scale=2)
-        return path
-
-    if st.button("📄 Generate PDF Report"):
-        buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4)
-        styles = getSampleStyleSheet()
-        story = []
-
-        # ================= TITLE =================
-        story.append(Paragraph("PREDICTAKENYA™ EXECUTIVE REPORT", styles["Title"]))
-        story.append(Paragraph(
-            f"Generated: {datetime.now().strftime('%d %B %Y %H:%M EAT')}",
-            styles["Normal"]
+    if "forecast" in results:
+        forecast_fig = go.Figure()
+        forecast_df = results["forecast"]
+        forecast_fig.add_trace(go.Scatter(
+            x=forecast_df["Date"], y=forecast_df["Forecast"],
+            mode="lines+markers", name="Forecast"
         ))
-        story.append(Spacer(1, 0.3 * inch))
-
-        # ================= FORECAST =================
-        story.append(Paragraph("12-Month Sales Forecast", styles["Heading2"]))
+        story.append(Paragraph("12-Month Forecast", styles["Heading2"]))
         story.append(Image(save_chart(forecast_fig, "forecast.png"), 6.5*inch, 3*inch))
         story.append(PageBreak())
 
-        # ================= TOP PRODUCTS =================
-        story.append(Paragraph("Top Performing Products", styles["Heading2"]))
-        top_data = [["#", "Product", "Sales"]]
-        for i, r in results["top_products"].reset_index().iterrows():
-            top_data.append([str(i+1), r["Product"], f"KES {r['Sales']:,.0f}"])
-        story.append(Table(top_data, repeatRows=1))
-        story.append(PageBreak())
+    # ================= TOP PRODUCTS =================
+    story.append(Paragraph("Top Performing Products", styles["Heading2"]))
+    top_data = [["#", "Product", "Sales"]]
+    for i, row in results["top_products"].reset_index().iterrows():
+        top_data.append([str(i+1), row["Product"], f"KES {row['Sales']:,.0f}"])
+    top_table = Table(top_data, repeatRows=1, colWidths=[0.6*inch, 3*inch, 2*inch])
+    top_table.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,0), colors.green),
+        ("TEXTCOLOR", (0,0), (-1,0), colors.white),
+        ("GRID", (0,0), (-1,-1), 1, colors.black)
+    ]))
+    story.append(top_table)
+    story.append(PageBreak())
 
-        # ================= SLOW PRODUCTS =================
-        story.append(Paragraph("Slow Moving Products", styles["Heading2"]))
-        slow_data = [["#", "Product", "Sales"]]
-        for i, r in results["slow_products"].reset_index().iterrows():
-            slow_data.append([str(i+1), r["Product"], f"KES {r['Sales']:,.0f}"])
-        story.append(Table(slow_data, repeatRows=1))
-        story.append(PageBreak())
+    # ================= SLOW PRODUCTS =================
+    story.append(Paragraph("Slow Moving Products", styles["Heading2"]))
+    slow_data = [["#", "Product", "Sales"]]
+    for i, row in results["slow_products"].reset_index().iterrows():
+        slow_data.append([str(i+1), row["Product"], f"KES {row['Sales']:,.0f}"])
+    slow_table = Table(slow_data, repeatRows=1, colWidths=[0.6*inch, 3*inch, 2*inch])
+    slow_table.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,0), colors.red),
+        ("TEXTCOLOR", (0,0), (-1,0), colors.white),
+        ("GRID", (0,0), (-1,-1), 1, colors.black)
+    ]))
+    story.append(slow_table)
+    story.append(PageBreak())
 
-        # ================= EXPIRY GOODS (1000) =================
-        story.append(Paragraph("Expiring Inventory (Up to 1,000 Items)", styles["Heading2"]))
+    # ================= EXPIRY GOODS =================
+    story.append(Paragraph("Expiring Inventory (Up to 1,000 Items)", styles["Heading2"]))
+    def expiry_status(days):
+        if days <= 7: return "🔴 Critical"
+        elif days <= 14: return "🟡 Warning"
+        else: return "🟢 Safe"
 
-        def expiry_status(days):
-            if days <= 7:
-                return "🔴 Critical"
-            elif days <= 14:
-                return "🟡 Warning"
-            else:
-                return "🟢 Safe"
+    exp = results["expiring_goods"].head(1000)
+    exp_data = [["Product", "Quantity", "Days Left", "Status"]]
+    for _, row in exp.iterrows():
+        exp_data.append([
+            row["Product"],
+            int(row["Quantity"]),
+            int(row["Days_Left"]),
+            expiry_status(row["Days_Left"])
+        ])
+    exp_table = Table(exp_data, repeatRows=1, colWidths=[2.5*inch, 1*inch, 1*inch, 1.5*inch])
+    exp_table.setStyle(TableStyle([("GRID", (0,0), (-1,-1), 0.5, colors.black)]))
+    story.append(exp_table)
+    story.append(PageBreak())
 
-        exp = results["expiring_goods"].head(1000)
-        exp_data = [["Product", "Quantity", "Days Left", "Status"]]
-        for _, r in exp.iterrows():
-            exp_data.append([
-                r["Product"],
-                int(r["Quantity"]),
-                int(r["Days_Left"]),
-                expiry_status(r["Days_Left"])
-            ])
+    # ================= COMPLIANCE =================
+    story.append(Paragraph("Compliance Notice", styles["Heading2"]))
+    story.append(Paragraph(
+        "This report complies with Kenya Data Protection Act 2019. All data has been anonymized. Confidential & Proprietary.",
+        styles["Normal"]
+    ))
 
-        exp_table = Table(exp_data, repeatRows=1)
-        exp_table.setStyle(TableStyle([
-            ("GRID", (0,0), (-1,-1), 0.5, colors.black)
-        ]))
-        story.append(exp_table)
-
-        doc.build(story)
-        buffer.seek(0)
-
-        st.download_button(
-            "⬇️ Download Full PDF Report",
-            buffer,
-            file_name="PredictaKenya_Full_Report.pdf",
-            mime="application/pdf"
-        )
+    # BUILD PDF
+    doc.build(story)
+    buffer.seek(0)
+    st.download_button(
+        "⬇️ Download Full PDF Report",
+        buffer,
+        file_name="PredictaKenya_Full_Report.pdf",
+        mime="application/pdf"
+    )
