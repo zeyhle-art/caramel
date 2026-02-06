@@ -1104,6 +1104,7 @@ top_data = [["Rank", "Product", "Total Sales"]]
             ("GRID", (0, 0), (-1, -1), 1, colors.black),
         ]))
         story.append(top_table)))
+story.append(PageBreak())
                     
                     # Slow Moving Products
                     story.append(Paragraph("SLOW MOVING PRODUCTS", heading_style))
