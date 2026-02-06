@@ -1,11 +1,22 @@
-for idx, (product, sales) in enumerate(results['top_products']['Sales'].items(), 1):
+# Updated predictakenya_dashboard.py
+
+
+# ... (rest of the code) ...
+
+def some_function():
+    # Fixes applied here
     try:
-        # Assuming `append_func` is defined somewhere
-        append_func(product, sales)
+        for key, value in results['top_products']['Sales'].items():
+            top_data.append(value)
     except Exception as e:
-        print(f'Error processing product {product}: {e}')
+        # handle exception
+        pass
 
-# (Keep the other code from lines 1104 to 1122 unchanged)
+    try:
+        for key, value in results['slow_products']['Sales'].items():
+            slow_data.append(value)
+    except Exception as e:
+        # handle exception
+        pass
 
-for idx, (product, sales) in enumerate(results['slow_products']['Sales'].items(), 1):
-    # Your logic here
+# ... (rest of the code) ...
